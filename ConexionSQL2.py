@@ -1,7 +1,7 @@
 import sqlite3
 import mysql.connector
 
-class Conexion:
+class ConexionSQL:
 
     def listar_deporistas_participan_diferentes_deportes(self, user, password, host, database):
         bbddd = input("MySQL o SQLite: ").lower()
@@ -197,30 +197,6 @@ class Conexion:
                 return elemento
         return None
 
-    def insertar_evento(self, evento, id_deporte, id_olimpiada, mySQL):
-        id = self.__exist_evento__(evento, id_deporte, id_olimpiada, mySQL)
-        if id == -1:
-           id = self.__insert_into_evento__(evento, id_deporte, id_olimpiada, mySQL)
-        return id
-
-    def insertar_olimpiada(self, games, year, season, city, mySQL):
-        id = self.__exist_olimpiadas__(year, season, mySQL)
-        if id == -1:
-           id = self.__insert_into_olimpiada__(games, year, season, city, mySQL)
-        return id
-
-    def insertar_equipo(self, equipo, noc , mySQL):
-        id = self.__exist_equipo__(equipo, noc, mySQL)
-        if id == -1:
-            id = self.__insert_into_equipo__(noc, equipo, mySQL)
-        return id
-
-    def insertar_deporte(self, deporte, mySQL):
-        id = self.__exist_deporte__(deporte, mySQL)
-        if id == -1:
-            id = self.__insert_into_deporte__(deporte, mySQL)
-        return id
-
     def __get_olimpiadas_por_temporada__(self, season, mySQL):
         if mySQL:
             sql = "SELECT * FROM Olimpiada WHERE season = %s"
@@ -340,85 +316,6 @@ class Conexion:
             return True
         return False
 
-    def __exist_evento__(self, evento, id_deporte, id_olimpiada, mySQL):
-        if not mySQL:
-            sql = "SELECT idEvento from Evento where Evento = ? AND idDeporte = ? AND idOlimpiada = ?"
-        else:
-            sql = "SELECT idEvento from Evento where Evento = %s AND idDeporte = %s AND idOlimpiada = %s"
-        return self.__exist_element__(sql, (evento, id_deporte, id_olimpiada))
-
-    def __exist_olimpiadas__(self, year, season, mySQL):
-        if not mySQL:
-            sql = "SELECT idOlimpiada from Olimpiada where year = ? AND season = ?"
-        else:
-            sql = "SELECT idOlimpiada from Olimpiada where year = %s AND season = %s"
-        return self.__exist_element__(sql, (year, season))
-
-    def __exist_equipo__(self, equipo, noc, mySQL):
-        if not mySQL:
-            sql = "SELECT idEquipo from Equipo where Equipo = ? AND NOC = ?"
-        else:
-            sql = "SELECT idEquipo from Equipo where Equipo = %s AND NOC = %s"
-        return self.__exist_element__(sql, (equipo, noc))
-
-    def __exist_deporte__(self, deporte, mySQL):
-        if not mySQL:
-            sql = "SELECT idDeporte from Deporte where Deporte = ?"
-        else:
-            sql = "SELECT idDeporte from Deporte where Deporte = %s"
-        return self.__exist_element__(sql, (deporte, ))
-
-    def __exist_element__(self, sql, values):
-        cur = self.conn.cursor()
-        cur.execute(sql, values)
-        row = cur.fetchone()
-        if row is not None:
-            return row[0]
-        return -1
-
-    def __insert_into_participacion(self, id_deportista, id_evento, id_equipo, medalla, edad, mySQL):
-        if not mySQL:
-            sql = ("INSERT INTO Participacion (`idDeportista`, `idEvento`, `idEquipo`, `Medalla`,`Edad`) "
-                "VALUES (?, ?, ?, ?, ?)")
-        else:
-            sql = ("INSERT INTO Participacion (`idDeportista`, `idEvento`, `idEquipo`, `Medalla`,`Edad`) "
-                "VALUES (%s, %s, %s, %s, %s)")
-        values = (id_deportista, id_evento, id_equipo, medalla, edad)
-        self.__insert_into__(sql, values)
-
-    def __insert_into_evento__(self, evento, id_deporte, id_olimpiada, mySQL):
-        if not mySQL:
-            sql = "INSERT INTO Evento (`Evento`,`idDeporte`,`idOlimpiada`) VALUES (?, ?, ?)"
-        else:
-            sql = "INSERT INTO Evento (`Evento`,`idDeporte`,`idOlimpiada`) VALUES (%s, %s, %s)"
-        values = (evento, id_deporte, id_olimpiada)
-        return self.__insert_into__(sql, values)
-
-    def __insert_into_olimpiada__(self, games, year, season, city, mySQL):
-        if not mySQL:
-            sql = "INSERT INTO Olimpiada (`games`,`year`, `season`,`city`) VALUES (?, ?, ?, ?)"
-        else:
-            sql = "INSERT INTO Olimpiada (`games`,`year`, `season`,`city`) VALUES (%s, %s, %s, %s)"
-        values = (games, year, season, city)
-        return self.__insert_into__(sql, values)
-
-    def __insert_into_equipo__(self, noc, equipo, mySQL):
-        if not mySQL:
-            sql = "INSERT INTO Equipo (`NOC`, `Equipo`) VALUES (?, ?)"
-        else:
-            sql = "INSERT INTO Equipo (`NOC`, `Equipo`) VALUES (%s, %s)"
-        values = (noc, equipo)
-        return self.__insert_into__(sql, values)
-
-    def __insert_into_deportista__(self, id, nombre, sexo, height, weight, mySQL):
-        if not mySQL:
-            sql = ("INSERT INTO Deportista (`idDeportista`,`Nombre`,`Sexo`,`Height`,`Weight`) VALUES ("
-                "?, ?, ?, ?, ?)")
-        else:
-            sql = ("INSERT INTO Deportista (`idDeportista`,`Nombre`,`Sexo`,`Height`,`Weight`) VALUES ("
-                "%s, %s, %s, %s, %s)")
-        values = (str(id), nombre, sexo, str(height), str(weight))
-        return self.__insert_into__(sql, values)
 
     def __insert_into_deportista2__(self, nombre, sexo, height, weight, mySQL):
         if not mySQL:
@@ -428,13 +325,6 @@ class Conexion:
         values = (nombre, sexo, height, weight)
         return self.__insert_into__(sql, values)
 
-    def __insert_into_deporte__(self, deporte, mySQL):
-        if not mySQL:
-            sql = "INSERT INTO Deporte (`Deporte`) VALUES (?)"
-        else:
-            sql = "INSERT INTO Deporte (`Deporte`) VALUES (%s)"
-        values = deporte
-        return self.__insert_into__(sql, (values,))
 
     def __insert_into__(self, sql, values):
         cur = self.conn.cursor()
