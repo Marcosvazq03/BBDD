@@ -155,6 +155,28 @@ def crear_BBDD(mySql):
     except FileNotFoundError:
         print("El archivo csv no existe")
 
+def mostrar_lista(cabezera, lista, info_user, strError, evento=False):
+    if len(lista) == 0:
+        print("No se encontrado ningun resultado.")
+        return None
+    lstIDs = []
+    print(cabezera)
+    print("------------------------------------------------------------")
+    for elemento in lista:
+        lstIDs.append(elemento[0])
+        if not evento:
+            str = elemento.__str__().replace("(", "").replace(",", "").replace(")", "").replace("'", "")
+            print(str)
+        else:
+            print(elemento[0], elemento[1])
+    id = int(input(info_user))
+    if not lstIDs.__contains__(id):
+        print(strError)
+        return None
+    for elemento in lista:
+        if id == elemento[0]:
+            return elemento
+    return None
 
 host = "localhost"
 user = "admin"
@@ -204,10 +226,34 @@ while resp != 0:
         else:
             mySQL = False
             conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
-        lstDeportistas = self.__get_deportista_partipacion_diferentes_deportes()
+
+        sql = ("select * from Deportista d where exists("
+               "select * from Participacion p where d.id_deportista = p.id_deportista and exists("
+               "select * from Evento e where p.id_evento = e.id_evento and exists("
+               "select * from ediciones_olimpicas.Deporte de where de.id_deporte = e.id_deporte)))"
+               "and 1 < ( select count(distinct(id_deporte)) from ediciones_olimpicas.Evento e2,"
+               " ediciones_olimpicas.Participacion p2 where e2.id_evento = p2.id_evento "
+               "and d.id_deportista = p2.id_deportista)order by d.id_deportista")
+        cur = self.conn.cursor()
+        cur.execute(sql)
+        lstDeportistas = cur.fetchall()
+
         print("Datos deportistas: ")
         for deportista in lstDeportistas:
-            participacion_olimpicas = self.__get_info_participaciones_olimpicas_deportista__(mySQL, deportista[0])
+            if not mySQL:
+                sql = (
+                    "select nombre, edad, evento, equipo, games, medalla from Participacion p, Equipo eq, Evento ev, "
+                    "Olimpiada o, Deporte d where p.id_equipo = eq.id_equipo and ev.id_evento = p.id_evento and "
+                    "ev.id_olimpiada = o.id_olimpiada and ev.id_deporte = d.id_deporte and p.id_deportista = ?")
+            else:
+                sql = (
+                    "select nombre, edad, evento, equipo, games, medalla from Participacion p, Equipo eq, Evento ev, "
+                    "Olimpiada o, Deporte d where p.id_equipo = eq.id_equipo and ev.id_evento = p.id_evento and "
+                    "ev.id_olimpiada = o.id_olimpiada and ev.id_deporte = d.id_deporte and p.id_deportista = %s")
+            cur = self.conn.cursor()
+            cur.execute(sql, (deportista[0],))
+            participacion_olimpicas = cur.fetchall()
+
             print("Deportista:")
             print(deportista[1], deportista[2], deportista[3], deportista[4])
             print("Particiones Olimpicas:")
@@ -215,10 +261,157 @@ while resp != 0:
                 print(participacion[0], participacion[1], participacion[2], participacion[3], participacion[4],
                       participacion[5])
     if resp == 4:
-        connSQL.listar_deportistas_que_participan(user, password, host, database)
+        bbddd = input("MySQL o SQLite: ").lower()
+        if bbddd.__eq__("mysql"):
+            mySQL = True
+            conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
+        else:
+            mySQL = False
+            conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
+        temporada = input("Winter o Summer (W/S): ").lower()
+        if temporada.__eq__("w"):
+            season = "Winter"
+        else:
+            season = "Summer"
+
+        if mySQL:
+            sql = "SELECT * FROM Olimpiada WHERE temporada = %s"
+        else:
+            sql = "SELECT * FROM Olimpiada WHERE temporada = ?"
+        cur = conn.cursor()
+        cur.execute(sql, (season,))
+        olimpiadas = cur.fetchall()
+        olimpiada = mostrar_lista("ID   GAME    YEAR    SEASON   CITY", olimpiadas, "Selecciona olimpiada(id): ", "No se ha seleccionado ningun olimpiada de la lista.")
+        deportes = self.__get_deportes_por_olimpiada__(olimpiada[0], mySQL)
+        deporte = mostrar_lista("ID   SPORT", deportes, "Selecciona deporte(id): ", "No se ha seleccionado ningun deporte de la lista.")
+        eventos = self.__get_eventos__(olimpiada[0], deporte[0], mySQL)
+        evento = mostrar_lista("ID   EVENTO", eventos, "Selecciona evento(id): ", "No se ha seleccionado ningun evento de la lista.", True)
+
+        # Resumen
+        deportistas = self.__get_deportistas_por_evento__(evento[0], mySQL)
+        print("Informacion seleccionada:", olimpiada[3], olimpiada[2], deporte[1], evento[1])
+        print("NOMBRE   SEXO    HEIGHT   WEIGHT   EQUIPO   MEDALLA")
+        print("------------------------------------------------------------")
+        for deportista in deportistas:
+            print(deportista[1], deportista[2], deportista[3], deportista[9], deportista[12], deportista[8])
     if resp == 5:
-        connSQL.modificar_medalla_deportista(user, password, host, database)
+        try:
+            searchCaracter = input("Introduzca el texto para buscar deportistas:")
+            conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
+            lstDeportista = self.__get_deportista_for_search_characters__(searchCaracter)
+            deportista = self.mostrar_lista("ID  NOMBRE  SEXO    HEIGHT  WEIGHT", lstDeportista,
+                                            "Selecciona deportista(id): ",
+                                            "No se seleccionado ningun depostista de la lista")
+            lstEventos = self.__get_evento_por_deportista__(deportista[0])
+            evento = self.mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ",
+                                        "No se seleccionado ningun evento de la lista")
+
+            medalla = input("Introduzca el nuevo valor del campo medalla(NA/Bronce/Silver/Gold): ").capitalize()
+            if (not medalla.__eq__("NA") and not medalla.__eq__("Bronce") and not medalla.__eq__(
+                    "Silver") and not medalla.__eq__("Gold")):
+                print("Valor no valido para el campo medalla")
+                break
+
+            if (self.__update_participacion_medalla__(deportista[0], evento[0], medalla, True)):
+                print("Se a podido modificar el campo medalla en MySQL.")
+            else:
+                print("No se podido modificar el campo medalla en MySQL.")
+
+            conn = sqlite3.connect("../Datos_Olimpiadas/ediciones_olimpicas.db")
+            if (self.__update_participacion_medalla__(deportista[0], evento[0], medalla, False)):
+                print("Se a podido modificar el campo medalla en SQLite.")
+            else:
+                print("No se podido modificar el campo medalla en SQLite.")
+
+        except TypeError:
+            print("Error")
     if resp == 6:
-        connSQL.aniadir_deportista_participacion(user, password, host, database)
+        conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
+        searchCaracter = input("Introduzca el texto para buscar deportistas: ")
+        lstDeportista = self.__get_deportista_for_search_characters__(searchCaracter)
+        if len(lstDeportista) == 0:
+            print("No existe ninguna busqueda con los caracteres pasado, se creara un deportista.")
+            nombre = input("Nombre: ")
+            sexo = input("Sexo(M/F): ")
+            height = int(input("Altura: "))
+            weight = int(input("Peso: "))
+            id = self.__insert_into_deportista2__(nombre, sexo, height, weight, True)
+            conn = sqlite3.connect("../Datos_Olimpiadas/ediciones_olimpicas.db")
+            self.__insert_into_deportista__(id, nombre, sexo, height, weight, False)
+            conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
+            deportista = (id, nombre, sexo, height, weight)
+        else:
+            deportista = self.mostrar_lista("ID  NOMBRE  SEXO    HEIGHT  WEIGHT", lstDeportista,
+                                            "Selecciona deportista(id): ",
+                                            "No se seleccionado ningun depostista de la lista")
+            if deportista is None:
+                break
+        temporada = input("Winter o Summer (W/S): ").lower()
+        if temporada.__eq__("w"):
+            season = "Winter"
+        else:
+            season = "Summer"
+
+        olimpiadas = self.__get_olimpiadas_por_temporada__(season, True)
+        olimpiada = self.mostrar_lista("ID   GAME    YEAR    SEASON  CITY", olimpiadas,
+                                       "Selecciona olimpiada(id): ",
+                                       "No se ha seleccionado ningun olimpiada de la lista.")
+        deportes = self.__get_deportes_por_olimpiada__(olimpiada[0], True)
+        deporte = self.mostrar_lista("ID   SPORT", deportes, "Selecciona deporte(id): ",
+                                     "No se ha seleccionado ningun deporte de la lista.")
+        eventos = self.__get_eventos__(olimpiada[0], deporte[0], True)
+        evento = self.mostrar_lista("ID   EVENTO", eventos, "Selecciona evento(id): ",
+                                    "No se ha seleccionado ningun evento de la lista.", True)
+
+        lstEquipo = self.__get_equipos__()
+        equipo = self.mostrar_lista("ID  EQUIPO", lstEquipo, "Selecciona equipo(id): ",
+                                    "No se seleccionado ningun depostista de la lista")
+
+        medalla = input("Introduzca el nuevo valor del campo medalla(NA/Bronce/Silver/Gold): ").capitalize()
+        if (not medalla.__eq__("NA") and not medalla.__eq__("Bronce") and not medalla.__eq__(
+                "Silver") and not medalla.__eq__("Gold")):
+            print("Valor no valido para el campo medalla")
+            break
+
+        edad = int(input("la edad del deportista: "))
+
+        self.__insert_into_participacion(deportista[0], evento[0], equipo[0], medalla, edad, True)
+        conn = sqlite3.connect("../Datos_Olimpiadas/ediciones_olimpicas.db")
+        self.__insert_into_participacion(deportista[0], evento[0], equipo[0], medalla, edad, False)
+
+        print("Insertado la participacion en MySQL y SQLite.")
+        print("Deportisa:", deportista[1], "Deporte:", deporte[1], "Olimpiada:", olimpiada[1], "Evento:", evento[1],
+              "Medalla:", medalla)
     if resp == 7:
-        connSQL.eliminar_participacion(user, password, host, database)
+        conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
+        searchCaracter = input("Introduzca el texto para buscar deportistas: ")
+        lstDeportista = self.__get_deportista_for_search_characters__(searchCaracter)
+        deportista = self.mostrar_lista("ID  NOMBRE  SEXO    HEIGHT  WEIGHT", lstDeportista,
+                                        "Selecciona deportista(id): ",
+                                        "No se seleccionado ningun depostista de la lista")
+        lstEventos = self.__get_evento_por_deportista__(deportista[0])
+        evento = self.mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ",
+                                    "No se seleccionado ningun evento de la lista")
+
+        if (self.__delete_participacion__(deportista[0], evento[0], True)):
+            print("Se a podido eliminar la participacion en MySQL.")
+        else:
+            print("No se podido eliminar la participacion en MySQL.")
+
+        if (len(lstEventos) == 1):
+            if (self.__delete_deportista__(deportista[0], True)):
+                print("Se a podido eliminar el deportista en MySQL.")
+            else:
+                print("No se podido eliminar el deportista en MySQL.")
+
+        conn = sqlite3.connect("../Datos_Olimpiadas/ediciones_olimpicas.db")
+        if (self.__delete_participacion__(deportista[0], evento[0], False)):
+            print("Se a podido eliminar la participacion en SQLite.")
+        else:
+            print("No se podido eliminar la participacion en SQLite.")
+
+        if (len(lstEventos) == 1):
+            if (self.__delete_deportista__(deportista[0], False)):
+                print("Se a podido eliminar el deportista en SQLite.")
+            else:
+                print("No se podido eliminar el deportista en SQLite.")
