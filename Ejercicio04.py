@@ -234,7 +234,7 @@ while resp != 0:
                "and 1 < ( select count(distinct(id_deporte)) from ediciones_olimpicas.Evento e2,"
                " ediciones_olimpicas.Participacion p2 where e2.id_evento = p2.id_evento "
                "and d.id_deportista = p2.id_deportista)order by d.id_deportista")
-        cur = self.conn.cursor()
+        cur = conn.cursor()
         cur.execute(sql)
         lstDeportistas = cur.fetchall()
 
@@ -242,15 +242,15 @@ while resp != 0:
         for deportista in lstDeportistas:
             if not mySQL:
                 sql = (
-                    "select nombre, edad, evento, equipo, games, medalla from Participacion p, Equipo eq, Evento ev, "
+                    "select * from Participacion p, Equipo eq, Evento ev, "
                     "Olimpiada o, Deporte d where p.id_equipo = eq.id_equipo and ev.id_evento = p.id_evento and "
                     "ev.id_olimpiada = o.id_olimpiada and ev.id_deporte = d.id_deporte and p.id_deportista = ?")
             else:
                 sql = (
-                    "select nombre, edad, evento, equipo, games, medalla from Participacion p, Equipo eq, Evento ev, "
+                    "select * from Participacion p, Equipo eq, Evento ev, "
                     "Olimpiada o, Deporte d where p.id_equipo = eq.id_equipo and ev.id_evento = p.id_evento and "
                     "ev.id_olimpiada = o.id_olimpiada and ev.id_deporte = d.id_deporte and p.id_deportista = %s")
-            cur = self.conn.cursor()
+            cur = conn.cursor()
             cur.execute(sql, (deportista[0],))
             participacion_olimpicas = cur.fetchall()
 
