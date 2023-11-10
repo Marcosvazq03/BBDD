@@ -284,20 +284,20 @@ while resp != 0:
         olimpiada = mostrar_lista("ID, GAME, YEAR, SEASON, CITY", olimpiadas, "Selecciona olimpiada(id): ", "No se ha seleccionado ningun olimpiada de la lista.")
 
         if mySQL:
-            sql = ("SELECT * FROM deporte d WHERE EXISTS(SELECT * FROM evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
-                   "SELECT * FROM olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = %s))")
+            sql = ("SELECT * FROM Deporte d WHERE EXISTS(SELECT * FROM Evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
+                   "SELECT * FROM Olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = %s))")
         else:
-            sql = ("SELECT * FROM deporte d WHERE EXISTS(SELECT * FROM evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
-                   "SELECT * FROM olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = ?))")
+            sql = ("SELECT * FROM Deporte d WHERE EXISTS(SELECT * FROM Evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
+                   "SELECT * FROM Olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = ?))")
         cur = conn.cursor()
         cur.execute(sql, (olimpiada[0],))
         deportes = cur.fetchall()
         deporte = mostrar_lista("ID, SPORT", deportes, "Selecciona deporte(id): ", "No se ha seleccionado ningun deporte de la lista.")
 
         if mySQL:
-            sql = "SELECT * FROM evento WHERE id_olimpiada = %s AND id_deporte = %s"
+            sql = "SELECT * FROM Evento WHERE id_olimpiada = %s AND id_deporte = %s"
         else:
-            sql = "SELECT * FROM evento WHERE id_olimpiada = ? AND id_deporte = ?"
+            sql = "SELECT * FROM Evento WHERE id_olimpiada = ? AND id_deporte = ?"
         cur = conn.cursor()
         cur.execute(sql, (olimpiada[0], deporte[0]))
         eventos = cur.fetchall()
@@ -305,11 +305,11 @@ while resp != 0:
 
         # Resumen
         if mySQL:
-            sql = ("SELECT * FROM deportista d, participacion p, equipo eq WHERE p.id_deportista = d.id_deportista AND eq.idEquipo = p.idEquipo AND EXISTS("
-                   "SELECT * FROM evento e WHERE e.id_evento = p.id_evento AND p.id_evento = %s)")
+            sql = ("SELECT * FROM Deportista d, participacion p, equipo eq WHERE p.id_deportista = d.id_deportista AND eq.idEquipo = p.idEquipo AND EXISTS("
+                   "SELECT * FROM Evento e WHERE e.id_evento = p.id_evento AND p.id_evento = %s)")
         else:
-            sql = ("SELECT * FROM deportista d, participacion p, equipo eq WHERE p.id_deportista = d.id_deportista AND eq.idEquipo = p.idEquipo AND EXISTS("
-                   "SELECT * FROM evento e WHERE e.id_evento = p.id_evento AND p.id_evento = ?)")
+            sql = ("SELECT * FROM Deportista d, participacion p, equipo eq WHERE p.id_deportista = d.id_deportista AND eq.idEquipo = p.idEquipo AND EXISTS("
+                   "SELECT * FROM Evento e WHERE e.id_evento = p.id_evento AND p.id_evento = ?)")
         cur = conn.cursor()
         cur.execute(sql, (evento[0], ))
         deportistas = cur.fetchall()
@@ -322,18 +322,16 @@ while resp != 0:
         try:
             searchCaracter = input("Introduzca el texto para buscar deportistas:")
             conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
-            sql = "SELECT * FROM deportista WHERE nombre like(%s)"
+            sql = "SELECT * FROM Deportista WHERE nombre like(%s)"
             cur = conn.cursor()
             cur.execute(sql, ("%" + searchCaracter + "%",))
             lstDeportista = cur.fetchall()
-            deportista = mostrar_lista("ID  NOMBRE  SEXO    HEIGHT  WEIGHT", lstDeportista,
-                                            "Selecciona deportista(id): ",
-                                            "No se seleccionado ningun depostista de la lista")
-            sql = "SELECT * FROM evento e WHERE EXISTS(SELECT * FROM participacion p WHERE e.id_evento = p.id_evento AND id_deportista = %s)"
+            deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista, "Selecciona deportista(id): ", "No se ha seleccionado ningun depostista de la lista")
+            sql = "SELECT * FROM Evento e WHERE EXISTS(SELECT * FROM Participacion p WHERE e.id_evento = p.id_evento AND id_deportista = %s)"
             cur = conn.cursor()
             cur.execute(sql, (deportista[0],))
             lstEventos = cur.fetchall()
-            evento = mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ",
+            evento = mostrar_lista("ID, EVENTO", lstEventos, "Selecciona evento(id): ",
                                         "No se seleccionado ningun evento de la lista")
 
             medalla = input("Introduzca el nuevo valor del campo medalla(NA/Bronce/Silver/Gold): ").capitalize()
@@ -342,7 +340,7 @@ while resp != 0:
                 print("Valor no valido para el campo medalla")
                 break
 
-            sql = "UPDATE participacion SET Medalla = %s WHERE id_deportista = %s AND id_evento = %s"
+            sql = "UPDATE Participacion SET medalla = %s WHERE id_deportista = %s AND id_evento = %s"
             cur = conn.cursor()
             cur.execute(sql, (medalla, deportista[0], evento[0]))
             conn.commit()
@@ -356,7 +354,7 @@ while resp != 0:
 
             conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
 
-            sql = "UPDATE participacion SET Medalla = ? WHERE id_deportista = ? AND id_evento = ?"
+            sql = "UPDATE Participacion SET medalla = ? WHERE id_deportista = ? AND id_evento = ?"
             cur = conn.cursor()
             cur.execute(sql, (medalla, deportista[0], evento[0]))
             conn.commit()
@@ -366,19 +364,19 @@ while resp != 0:
             if (modificar):
                 print("Se ha podido modificar el campo medalla en SQLite.")
             else:
-                print("No se podido modificar el campo medalla en SQLite.")
+                print("No se ha podido modificar el campo medalla en SQLite.")
 
         except TypeError:
             print("Error")
     if resp == 6:
         conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
         searchCaracter = input("Introduzca el texto para buscar deportistas: ")
-        sql = "SELECT * FROM deportista WHERE nombre like(%s)"
+        sql = "SELECT * FROM Deportista WHERE nombre like(%s)"
         cur = conn.cursor()
         cur.execute(sql, ("%" + searchCaracter + "%",))
         lstDeportista = cur.fetchall()
         if len(lstDeportista) == 0:
-            print("No existe ninguna busqueda con los caracteres pasado, se creara un deportista.")
+            print("No existe ninguna busqueda con los caracteres pasados, se creara un deportista.")
             nombre = input("Nombre: ")
             sexo = input("Sexo(M/F): ")
             height = int(input("Altura: "))
@@ -395,9 +393,7 @@ while resp != 0:
             conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
             deportista = (id, nombre, sexo, height, weight)
         else:
-            deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista,
-                                            "Selecciona deportista(id): ",
-                                            "No se ha seleccionado ningun depostista de la lista")
+            deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista, "Selecciona deportista(id): ", "No se ha seleccionado ningun depostista de la lista")
             if deportista is None:
                 break
         temporada = input("Winter o Summer (W/S): ").lower()
@@ -406,35 +402,31 @@ while resp != 0:
         else:
             season = "Summer"
 
-        sql = "SELECT * FROM Olimpiada WHERE season = %s"
+        sql = "SELECT * FROM Olimpiada WHERE temporada = %s"
         cur = conn.cursor()
         cur.execute(sql, (season,))
         olimpiadas = cur.fetchall()
-        olimpiada = mostrar_lista("ID, GAME, YEAR, SEASON, CITY", olimpiadas,
-                                       "Selecciona olimpiada(id): ",
-                                       "No se ha seleccionado ningun olimpiada de la lista.")
+        olimpiada = mostrar_lista("ID, GAME, YEAR, SEASON, CITY", olimpiadas, "Selecciona olimpiada(id): ", "No se ha seleccionado ningun olimpiada de la lista.")
 
-        sql = ("SELECT * FROM deporte d WHERE EXISTS(SELECT * FROM evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
-                "SELECT * FROM olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = %s))")
+        sql = ("SELECT * FROM Deporte d WHERE EXISTS(SELECT * FROM Evento e WHERE d.id_deporte = e.id_deporte AND EXISTS("
+                "SELECT * FROM Olimpiada o WHERE e.id_olimpiada = o.id_olimpiada AND o.id_olimpiada = %s))")
         cur = conn.cursor()
         cur.execute(sql, (olimpiada[0],))
         deportes = cur.fetchall()
         deporte = mostrar_lista("ID, SPORT", deportes, "Selecciona deporte(id): ",
                                      "No se ha seleccionado ningun deporte de la lista.")
 
-        sql = "SELECT * FROM evento WHERE id_olimpiada = %s AND id_deporte = %s"
+        sql = "SELECT * FROM Evento WHERE id_olimpiada = %s AND id_deporte = %s"
         cur = conn.cursor()
         cur.execute(sql, (olimpiada[0], deporte[0]))
         eventos = cur.fetchall()
-        evento = mostrar_lista("ID, EVENTO", eventos, "Selecciona evento(id): ",
-                                    "No se ha seleccionado ningun evento de la lista.", True)
+        evento = mostrar_lista("ID, EVENTO", eventos, "Selecciona evento(id): ", "No se ha seleccionado ningun evento de la lista.", True)
 
-        sql = "SELECT * FROM equipo"
+        sql = "SELECT * FROM Equipo"
         cur = conn.cursor()
         cur.execute(sql)
         lstEquipo = cur.fetchall()
-        equipo = mostrar_lista("ID, EQUIPO", lstEquipo, "Selecciona equipo(id): ",
-                                    "No se ha seleccionado ningun depostista de la lista")
+        equipo = mostrar_lista("ID, EQUIPO", lstEquipo, "Selecciona equipo(id): ", "No se ha seleccionado ningun depostista de la lista")
 
         medalla = input("Introduzca el nuevo valor del campo medalla(NA/Bronce/Silver/Gold): ").capitalize()
         if (not medalla.__eq__("NA") and not medalla.__eq__("Bronce") and not medalla.__eq__(
@@ -444,9 +436,9 @@ while resp != 0:
 
         edad = int(input("la edad del deportista: "))
 
-        insert_into_participacion(deportista[0], evento[0], equipo[0], medalla, edad, True)
+        insert_into_participacion(deportista[0], evento[0], equipo[0], edad, medalla, True)
         conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
-        insert_into_participacion(deportista[0], evento[0], equipo[0], medalla, edad, False)
+        insert_into_participacion(deportista[0], evento[0], equipo[0], edad, medalla, False)
 
         print("Insertado la participacion en MySQL y SQLite.")
         print("Deportisa:", deportista[1], "Deporte:", deporte[1], "Olimpiada:", olimpiada[1], "Evento:", evento[1],
@@ -454,21 +446,18 @@ while resp != 0:
     if resp == 7:
         conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
         searchCaracter = input("Introduzca el texto para buscar deportistas: ")
-        sql = "SELECT * FROM deportista WHERE nombre like(%s)"
+        sql = "SELECT * FROM Deportista WHERE nombre like(%s)"
         cur = conn.cursor()
         cur.execute(sql, ("%" + searchCaracter + "%",))
         lstDeportista = cur.fetchall()
-        deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista,
-                                        "Selecciona deportista(id): ",
-                                        "No se ha seleccionado ningun depostista de la lista")
-        sql = "SELECT * FROM evento e WHERE EXISTS(SELECT * FROM participacion p WHERE e.id_evento = p.id_evento AND id_deportista = %s)"
+        deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista, "Selecciona deportista(id): ", "No se ha seleccionado ningun depostista de la lista")
+        sql = "SELECT * FROM Evento e WHERE EXISTS(SELECT * FROM Participacion p WHERE e.id_evento = p.id_evento AND id_deportista = %s)"
         cur = conn.cursor()
         cur.execute(sql, (deportista[0],))
         lstEventos = cur.fetchall()
-        evento = mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ",
-                                    "No se ha seleccionado ningun evento de la lista")
+        evento = mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ", "No se ha seleccionado ningun evento de la lista")
 
-        sql = "DELETE FROM participacion WHERE id_deportista = ? AND id_evento = ?"
+        sql = "DELETE FROM Participacion WHERE id_deportista = ? AND id_evento = ?"
         cur = conn.cursor()
         cur.execute(sql, (deportista[0], evento[0]))
         conn.commit()
@@ -481,7 +470,7 @@ while resp != 0:
             print("No se ha podido eliminar la participacion en MySQL.")
 
         if (len(lstEventos) == 1):
-            sql = "DELETE FROM deportista WHERE id_deportista = ?"
+            sql = "DELETE FROM Deportista WHERE id_deportista = ?"
             cur = conn.cursor()
             cur.execute(sql, (deportista[0],))
             conn.commit()
@@ -494,7 +483,7 @@ while resp != 0:
                 print("No se ha podido eliminar el deportista en MySQL.")
 
         conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
-        sql = "DELETE FROM participacion WHERE id_deportista = %s AND id_evento = %s"
+        sql = "DELETE FROM Participacion WHERE id_deportista = %s AND id_evento = %s"
         cur = conn.cursor()
         cur.execute(sql, (deportista[0], evento[0]))
         conn.commit()
@@ -507,7 +496,7 @@ while resp != 0:
             print("No se ha podido eliminar la participacion en SQLite.")
 
         if (len(lstEventos) == 1):
-            sql = "DELETE FROM deportista WHERE id_deportista = %s"
+            sql = "DELETE FROM Deportista WHERE id_deportista = %s"
             cur = conn.cursor()
             cur.execute(sql, (deportista[0],))
             conn.commit()
