@@ -157,7 +157,7 @@ def crear_BBDD(mySql):
 
 def mostrar_lista(cabezera, lista, info_user, strError, evento=False):
     if len(lista) == 0:
-        print("No se encontrado ningun resultado.")
+        print("No se ha encontrado ningun resultado.")
         return None
     lstIDs = []
     print(cabezera)
@@ -219,8 +219,8 @@ while resp != 0:
 
         crear_BBDD(False)
     if resp == 3:
-        bbddd = input("MySQL o SQLite: ").lower()
-        if bbddd.__eq__("mysql"):
+        bbdd = input("MySQL o SQLite: ").lower()
+        if bbdd.__eq__("mysql"):
             mySQL = True
             conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
         else:
@@ -261,8 +261,8 @@ while resp != 0:
                 print(participacion[0], participacion[1], participacion[2], participacion[3], participacion[4],
                       participacion[5])
     if resp == 4:
-        bbddd = input("MySQL o SQLite: ").lower()
-        if bbddd.__eq__("mysql"):
+        bbdd = input("MySQL o SQLite: ").lower()
+        if bbdd.__eq__("mysql"):
             mySQL = True
             conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
         else:
@@ -332,7 +332,7 @@ while resp != 0:
             cur.execute(sql, (deportista[0],))
             lstEventos = cur.fetchall()
             evento = mostrar_lista("ID, EVENTO", lstEventos, "Selecciona evento(id): ",
-                                        "No se seleccionado ningun evento de la lista")
+                                        "No se ha seleccionado ningun evento de la lista")
 
             medalla = input("Introduzca el nuevo valor del campo medalla(NA/Bronce/Silver/Gold): ").capitalize()
             if (not medalla.__eq__("NA") and not medalla.__eq__("Bronce") and not medalla.__eq__(
@@ -350,7 +350,7 @@ while resp != 0:
             if (modificar):
                 print("Se ha podido modificar el campo medalla en MySQL.")
             else:
-                print("No se podido modificar el campo medalla en MySQL.")
+                print("No se ha podido modificar el campo medalla en MySQL.")
 
             conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
 
@@ -434,7 +434,7 @@ while resp != 0:
             print("Valor no valido para el campo medalla")
             break
 
-        edad = int(input("la edad del deportista: "))
+        edad = int(input("Edad del deportista: "))
 
         insert_into_participacion(deportista[0], evento[0], equipo[0], edad, medalla, True)
         conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
@@ -455,7 +455,7 @@ while resp != 0:
         cur = conn.cursor()
         cur.execute(sql, (deportista[0],))
         lstEventos = cur.fetchall()
-        evento = mostrar_lista("ID  EVENTO", lstEventos, "Selecciona evento(id): ", "No se ha seleccionado ningun evento de la lista")
+        evento = mostrar_lista("ID, EVENTO", lstEventos, "Selecciona evento(id): ", "No se ha seleccionado ningun evento de la lista")
 
         sql = "DELETE FROM Participacion WHERE id_deportista = ? AND id_evento = ?"
         cur = conn.cursor()
