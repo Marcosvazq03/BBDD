@@ -201,11 +201,11 @@ while resp != 0:
 
         #Borrar contenido
         dbConn = mysql.connector.connect(user=user, password=password, host=host)
-        cursor = dbConn.cursor(dictionary=True)
+        cur = dbConn.cur(dictionary=True)
         with open("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.sql", "r") as f:
-            result_iterator = cursor.execute(f.read(), multi=True)
+            result_iterator = cur.execute(f.read(), multi=True)
             dbConn.commit()
-        cursor.close()
+        cur.close()
         dbConn.close()
 
         crear_BBDD(True)
@@ -213,9 +213,11 @@ while resp != 0:
         conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
 
         #Borrar contenido
-        cursor = conn.cursor()
+        cur = conn.cursor()
         with open("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db.sql", "r") as f:
-            cursor.executescript(f.read())
+            cur.executescript(f.read())
+
+        cur.close()
 
         crear_BBDD(False)
     if resp == 3:
@@ -260,6 +262,8 @@ while resp != 0:
             for participacion in participacion_olimpicas:
                 print(participacion[0], participacion[1], participacion[2], participacion[3], participacion[4],
                       participacion[5])
+        cur.close()
+        conn.close()
     if resp == 4:
         bbdd = input("MySQL o SQLite: ").lower()
         if bbdd.__eq__("mysql"):
@@ -318,6 +322,8 @@ while resp != 0:
         print("------")
         for deportista in deportistas:
             print(deportista[1], deportista[2], deportista[3], deportista[9], deportista[12], deportista[8])
+        cur.close()
+        conn.close()
     if resp == 5:
         try:
             searchCaracter = input("Introduzca el texto para buscar deportistas:")
@@ -365,7 +371,6 @@ while resp != 0:
                 print("Se ha podido modificar el campo medalla en SQLite.")
             else:
                 print("No se ha podido modificar el campo medalla en SQLite.")
-
         except TypeError:
             print("Error")
     if resp == 6:
@@ -389,9 +394,9 @@ while resp != 0:
             id = cur.lastrowid
             conn.commit()
             conn = sqlite3.connect("/home/dm2/PycharmProjects/pythonProject1/ediciones_olimpicas.db")
-            insert_into_deportista(id, nombre, sexo, height, weight, False)
+            insert_into_deportista(id, nombre, sexo, weight, height, False)
             conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
-            deportista = (id, nombre, sexo, height, weight)
+            deportista = (id, nombre, sexo, weight, height)
         else:
             deportista = mostrar_lista("ID, NOMBRE, SEXO, HEIGHT, WEIGHT", lstDeportista, "Selecciona deportista(id): ", "No se ha seleccionado ningun depostista de la lista")
             if deportista is None:
@@ -443,6 +448,8 @@ while resp != 0:
         print("Insertado la participacion en MySQL y SQLite.")
         print("Deportisa:", deportista[1], "Deporte:", deporte[1], "Olimpiada:", olimpiada[1], "Evento:", evento[1],
               "Medalla:", medalla)
+        cur.close()
+        conn.close()
     if resp == 7:
         conn = mysql.connector.connect(user=user, password=password, host=host, database=database)
         searchCaracter = input("Introduzca el texto para buscar deportistas: ")
@@ -507,3 +514,5 @@ while resp != 0:
                 print("Se ha podido eliminar el deportista en SQLite.")
             else:
                 print("No se ha podido eliminar el deportista en SQLite.")
+        cur.close()
+        conn.close()
